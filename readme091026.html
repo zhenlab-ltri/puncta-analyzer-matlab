@@ -1,0 +1,147 @@
+<HTML lang="en">
+<!-- 作成日 2007/12/20  7:06:11 PM -->
+<HEAD>
+	<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<META NAME="GENERATOR" CONTENT="mi">
+	
+<TITLE>Puncta Analysis Toolkit beta</TITLE>
+</HEAD>
+<BODY>
+<H1>Puncta Analysis Toolkit beta</H1>
+<P>This document describes the C. elegans nerve cord fluorescent puncta analysis programs, <TT>Preprocessor_2</TT>, <TT>punctaanalyser</TT> and <TT>batch</TT>, and some tips about image preparations.<br>
+This software tool kit is provided "as is" without warranty of any kind and no support at all.
+</P>
+<P>Copyright &copy 2008 Taizo Kawano</P>
+
+
+
+<UL class="menu">
+<LI><A accesskey="1" HREF="#Introduction">Introduction</A>
+<LI><A accesskey="2" HREF="#Taking pictures and image format">Taking pictures and imagre format</A>
+<LI><A accesskey="3" HREF="#Preprocessor_2">Preprocessor_2</A>
+<LI><A accesskey="4" HREF="#punctaanalyser">punctaanalyser</A>
+<LI><A accesskey="5" HREF="#batch">batch</A>
+<LI><A accesskey="6" HREF="#Acknowledgments">Acknowledgments</A>
+<LI><A accesskey="7" HREF="#Extra">Extra</A>
+<LI><A accesskey="8" HREF="#Version history">Version history</A>
+</UL>
+
+<a name="Introduction"></a>
+<h2 class="chapter">1 Introduction</h2>
+<P>The <TT>Preprocessor_2</TT> is a Plugin for <A HREF="http://rsb.info.nih.gov/ij/">ImageJ</A>, a public domain image processing software. And <TT>punctaanalyser</TT> and <TT>batch</TT> are function files for <A HREF="http://www.octave.org">GNU Octave 2.9</A> or Matlab 6, numerical computation environment. If you have installed neither, install softwares first. Both ImageJ and Octave are multiplatform software. ImageJ installation is simple. Just follow the instruction found in Downloads page of ImageJ site. (The <TT>Preprocessor_2</TT>.class requires Java 1.5 or later version. If your Java version is lower than 1.4, you need to update it. If you have JDK 1.4 you may try recompile source code.) Then put the <TT>Preprocessor_2.class</TT> file to plugin folder of ImageJ. If you have interested in modify it, the source code could be found <A HREF="docs/Preprocessor_2.java">here</A>. Documents about installation of Octave could be found somewhere on the web, but no guarantee of successful installation because its based on UNIX and do it yourself culture. So I recommend Matlab IF YOU CAN install it. If you use Octave, you might have to install additional packages, octave-forge (at least image and I/O packages).</P>
+<P><B>outline</B><BR>
+At first, you have to have pretty good (paper quality) pictures of your samples. <TT>Preprocessor_2</TT>  straighten the axon and processes these pictures into cropped and background subtracted  images. You must save these subtracted images into same Directory with <TT>punctaanalyser</TT> and <TT>batch</TT> with named as samplegroup-serialnumber.txt (ex, wt-1.txt).
+Then use <TT>punctaanalyser</TT> and play around with 2nd and 3rd argument to determine threshold that you think the best.
+Finally, use <TT>batch</TT> to process all pictures and collect data.
+The <TT>batch</TT> program makes data files such as distance.txt, fixwidth.txt... etc.
+So you can analyze them whatever program you like (Excel, SPSS or <A HREF="http://www.r-project.org/">R</A>, which I use.)
+</P>
+
+
+<a name="Taking pictures and image format"></a>
+<h2 class="chapter">2 Taking pictures and image preparation</h2>
+<P>The program can analyze any pictures. But to obtain accurate and reliable result, there might be several points.
+</P>
+<p>
+	<B>Take non saturated/non-Zero background pictures</B> The basics, just in case.  If you use 12 bit camera, 4096 (2^12) is the maximum value. So, If you see the brightest region of your image has this value, it is saturated. About the backgound, always keep some background signals. If you cut off the background, you may lose information about local background variation.
+</p>
+
+<P><B>Use high mag. objective.</B> Basically, reducing data quality is pretty easy, and getting back the lost information is hard work, almost impossible. In short, keep the highest quality.
+</P>
+
+<P><B>Use low gain as possible.</B> Increasing gain makes bright picture, but also increases noise. I know if you use 0 gain, it might difficult to see the signal on the monitor, and longer exposure cause quenching. So, there is no right answer. Normally I use 20% gain, 200 msec exposure, but it could be different with different marker.
+</P>
+
+<P><B>Take z-serial sections.</B> If you take pictures as single shot, focused area might be quit narrow (depends on focal depth of yor objective or microscope system). As you know, the axon is not so straight, and out focused puncta doesn't make sense. If you can not get  long in focus stretch of axon by one shot, take pictures with multiple foci and combine them into single image. Many acquisition programs have fuction to make such images. If your acquisition software doesn't have it, alternatively, using <A HREF="http://rsb.info.nih.gov/ij/">ImageJ</A>, open serial images from File-Import-Image Sequence menu. Choose three adjacent z-sections that contain in-focus puncta. Then combine by Image-Stacks-Z project-Max intensity. Make sure region where puncta are in-focus within the sections and use only such region.
+</P>
+
+<P><B>Save as multiple "tiff" format, not "tiff for publication".</B> (For Open lab user) Firstly, The "tiff for publication" option of Openlab makes data having three channels. When you just using single channel (taking pictures of only green or red), this doesn't make any sense. You are triplicating same data and occupying storage. Here I would say, don't keep useless data.<BR>
+The second point is more important. The "tiff" option store pictures as 16 bit single channel, on the other hand "tiff for publication" does as 8 bit x 3 channels. The difference of bit is amount of information of each channel. If it is 1 bit, the picture just has two different brightness, black or white. If its 2 bit, there are four; black, dark gray, light gay and white. So, 8 bit data only has 256 different brightness, and 16 bit can describe 65,536 deference. Obviously, 16 bit is better. This allows you more flexible use of pictures at later stage.
+</P>
+<p>Alternatively, you may save as openlab native format, liff, and open it on ImageJ with loci_tools.jar plugin distributed by <A HREF="http://www.loci.wisc.edu/ome/formats.html">OME at LOCI – Software – Bio-Formats library</A>. This plugin may split channels automatically, but it seems buggy. So still I prefer to save as multiple tiff and import them.</p>
+
+
+<a name="Preprocessor_2"></a>
+<h2 class="chapter">3 Preprocessor_2</h2>
+<P>The <TT>Preprocessor_2</TT> needs your help to determine where is the axon. It rotates each segment as horizontal and crops around axon. Then subtracts background signal, which determined by the top and bottom 5 pixels of each columns of cropped image. Here is example.<BR>
+
+<IMG SRC = "docs/Preprocessor_21.png" WIDTH = "502" HEIGHT = "402" ALT = ""><BR>
+Then choose the "segmented line selections tool" <br>
+<IMG SRC = "docs/Preprocessor_22.png" ALT = ""><br>
+and click along axon.<br>
+<IMG SRC = "docs/Preprocessor_23.png" WIDTH = "502" HEIGHT = "402"ALT = ""><br>
+You can add points with Shift-click or delete with option-click and move those. Also the line can be moved with allow keys or mouse.<br>
+If you think the line fit with axon enough, use <TT>Preprocessor_2</TT> from Plugins menu or shortcut. You will see the subtracted image and save dialog, which requires you to choose saving folder and name of file. Please name the files as mentioned before; samplename-number.txt (ex, hpIs100-1.txt). The serial number must be serial. Missing number cause error of batch script. Also, If you want to use R script later part, the name must not have symboles, such as ";". <br>
+<IMG SRC = "docs/Preprocessor_24.png"ALT = ""><br>
+<B>Attention</B> This program does straighten curved axon with rotation method, but doesn't calculate expansion/contraction cased by body bend of worm. So, still you need to take pictures of relatively straight worms, not coiling one.
+
+<a name="punctaanalyser"></a>
+<h2 class="chapter">4 punctaanalyser</h2>
+<P>Once you have done the image pre-processing using <TT>Preprocessor_2</TT>, now the time of actual analysis. Open command window of Octave/Matlab and move to working directory where store your data and type <TT>punctaanalyser('wt-1')</TT><BR>
+</P>
+<P>The calculation of <TT>pcount, plineardensity, pdist, pwidths, pgaps, pintens</TT> and <TT>pvolumes</TT> can be explained with this figure. The x-axis represent pixel and the y-axis represent intensity. <TT>pcount</TT> is the number of blue cross. <TT>plineardensity</TT> is lineardensity(num/um) of blue cross. <TT>pdist</TT> is distance between each blue cross. <TT>pwidth</TT> is length of green to green that have blue cross. <TT>pgaps</TT> is green to green but not including blue. <TT>pintens</TT> is height of blue cross. <TT>pvolumes</TT> is the area surrounded by green-blue-green.<BR>
+<IMG SRC = "docs/punctaanalyser.png" WIDTH = "800" HEIGHT = "300" ALT = ""><BR>
+</P>
+<P>The <TT>fixwidth, fixvol</TT> and <TT>fixgap</TT> are calculated with simple method. The region that above the threshold is defined as puncta. <TT>fixwidth</TT> is green to black. <TT>fixvol</TT> is area surrounded by green-redline-black. <TT>fixgap</TT> is black-green.<BR>
+<IMG SRC = "docs/punctaanalyser2.png" WIDTH = "800" HEIGHT = "250" ALT = ""><BR>
+</P>
+
+<P>If you see strange figure or error, the threshold setting might be inadequate. Try, <TT>punctaanalyser('wt-1', 40, 2000)</TT>  or so. (From now, you don't need to type everything every-time. Hit the up-arrow key, then you will see the command that you used last time. So all you need to do is just change the variables that you need.)
+The second argument define threshold of first figure, and third argument is for the second one. Also you can use like this
+<TT>punctaanalyser ('wt-1', 40, 2000, 1, 63)</TT> the 4th and 5th arguments determine mode and objective. 0 is default mode and shows all figures. mode = 1 doesn't show any figure (silent mode). Now default objective is changed to 0. So, the unit of results are pixel. 
+Also, if you need data of each picture separately, copy and run this.<BR>
+<TT> [pcount, plineardensity, pdist, pwidths, pgaps, pintens, pvolumes, fixwidth, fixvol, fixgap, fixwidthlineardensity, fixgaplineardensity]  = punctaanalyser ('wt-1')</TT><BR>
+ With this command, the program display all data on the command-line interface.
+</P>
+
+<a name="batch"></a>
+<h2 class="chapter">5 batch</h2>
+<P>Finally, you can process all of these images with single command, like; <TT>batch('wt,e5,fc16,e1598',40,2000)</TT> (Make sure genotypes were surrounded by ', and there is no spaces between genotypes.)
+Then you see something like this.</P><BR>
+<P><TT>octave:8> batch('wt,e5,fc16,e1598',40,2000)</TT><BR>
+<TT>samplenames = wt,e5,fc16,e1598</TT><BR>
+<TT>thresholdcoeff =  40</TT><BR>
+<TT>fixthreshold =  2000</TT><BR>
+<TT>modestring = silent</TT><BR>
+<TT>objective =  100</TT><BR>
+<TT>Do you want to process with this condition? y/n</TT><BR>
+</P>
+
+<P>If its OK, type y, if not, n, and re-enter what you want.
+Again, you can use the 4th and 5th arguments to designate mode and objective. But now 1 is default mode and doesn't show any figure (silent mode).
+</P>
+
+
+<a name="Acknowledgments"></a>
+<h2 class="chapter">6 Acknowledgments</h2>
+I would like to Thank Calvin Mok who made basic direction of puncta analysis method and gave me advice about compatibility with Matlab. Also I would like to thank Dr. Mei Zhen for a lot of advice and for the giving opportunity to work with this project.<BR>
+
+<a name="Extra"></a>
+<h2 class="chapter">7 Extra</h2>
+<p>
+	<A HREF="rscript.R">rscript.R</A><br>
+  This is example <TT>R</TT> script for punctaanalysis tool kit.  If you use batch program, you can use this script.<br>
+  To use it, start <TT>R</TT> and change the working directory to where your pictures and data are stored,  and just copy everything in the script and paste it on <TT>R</TT> terminal and push return key. Once you have run this script, you will get some pdf density graphs,  and ready to test data sets which has been log2 transformed. ex.<TT> wtfixwidth, daffixwidth...</TT> Then you can test with something like this<br>
+<TT>t.test(wtfixwidth, daffixwidth)</TT><br>
+ 
+I don't know what kind of test is best. Making a choice is your job.<br>
+Attention: log transformation affect the result of parametric test.<br>
+Also, here is an example of density graph<br>
+<br>
+<TT>plot(density(wtwidth), col=2, xlim=c(-2, 2), ylim=c(0,1))</TT<br>
+<TT>par(new =T)</TT><br>
+<TT>plot(density(dafwidth), xlim=c(-2, 2), ylim=c(0,1))</TT><br>
+<br>
+I hope this example file helps you to learn R scripting.  20080407 Taizo
+</p>
+
+
+<a name="Version history"></a>
+<h2 class="chapter">8 Version history</h2>
+<p>
+	2009/10/26 Beta5. <br>
+	Fixed a bug, introduced in Beta3, that cause pvolume is not calculated as expected.<br>
+	The default objective is changed to 0, and the output unit is pixel, not um.
+</p>
+</BODY>
+</HTML>
